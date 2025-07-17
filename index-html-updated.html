@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Crypto Trading System - Advanced Scanner & Trading</title>
+    <link rel="stylesheet" href="style.css">
+    <!-- External Libraries -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://unpkg.com/@solana/web3.js@latest/lib/index.iife.min.js"></script>
+</head>
+<body>
+    <div class="app-container">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-content">
+                <div class="logo">
+                    <h1>Crypto Trading System</h1>
+                </div>
+                <nav class="nav-tabs">
+                    <button class="nav-tab active" data-tab="dashboard">Dashboard</button>
+                    <button class="nav-tab" data-tab="scanner">Scanner</button>
+                    <button class="nav-tab" data-tab="trading">Trading</button>
+                    <button class="nav-tab" data-tab="analytics">Analytics</button>
+                    <button class="nav-tab" data-tab="settings">Settings</button>
+                </nav>
+                <div class="header-info">
+                    <div class="connection-status">
+                        <span class="status-indicator" id="connectionStatus">Disconnected</span>
+                    </div>
+                    <div class="wallet-section">
+                        <button id="connectWallet" class="btn btn--primary btn--sm">
+                            Connect Wallet
+                        </button>
+                        <div id="walletInfo" class="wallet-info hidden">
+                            <span class="wallet-address"></span>
+                            <span class="wallet-balance">0.0000 SOL</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Dashboard Tab -->
+            <div class="tab-content active" id="dashboard">
+                <div class="container">
+                    <div class="dashboard-grid">
+                        <div class="card">
+                            <div class="card__header">
+                                <h3>Market Overview</h3>
+                                <button class="btn btn--sm btn--outline" onclick="tradingSystem.refreshMarketData()">Refresh</button>
+                            </div>
+                            <div class="card__body">
+                                <div class="market-stats">
+                                    <div class="stat-item">
+                                        <span class="stat-label">Active Signals</span>
+                                        <span class="stat-value" id="activeCoins">0</span>
+                                    </div>
+                                    <div class="stat-item">
+                                        <span class="stat-label">Volume 24h</span>
+                                        <span class="stat-value" id="totalVolume">$0</span>
+                                    </div>
+                                    <div class="stat-item">
+                                        <span class="stat-label">Open Positions</span>
+                                        <span class="stat-value" id="openPositions">0</span>
+                                    </div>
+                                    <div class="stat-item">
+                                        <span class="stat-label">Daily P&L</span>
+                                        <span class="stat-value" id="dailyPnl">$0.00</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="card">
+                            <div class="card__header">
+                                <h3>Active Positions</h3>
+                            </div>
+                            <div class="card__body">
+                                <div class="positions-list" id="positionsList">
+                                    <p class="text-secondary">No active positions</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="card">
+                            <div class="card__header">
+                                <h3>Recent Activity</h3>
+                            </div>
+                            <div class="card__body">
+                                <div class="alerts-list" id="alertsList">
+                                    <p class="text-secondary">No recent activity</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Scanner Tab -->
+            <div class="tab-content" id="scanner">
+                <div class="container">
+                    <div class="scanner-controls">
+                        <h2>Live Market Scanner</h2>
+                        <div class="flex gap-8 mb-8">
+                            <button class="btn btn--primary" onclick="tradingSystem.startScanning()">Start Scanner</button>
+                            <button class="btn btn--secondary" onclick="tradingSystem.stopScanning()">Stop Scanner</button>
+                            <span class="scanner-status" id="scannerStatus">Stopped</span>
+                        </div>
+                    </div>
+                    
+                    <div class="scanner-results">
+                        <div class="card">
+                            <div class="card__header">
+                                <h3>Trading Signals</h3>
+                                <span class="badge" id="detectedCount">0</span>
+                            </div>
+                            <div class="card__body">
+                                <div class="table-container">
+                                    <table class="coins-table">
+                                        <thead>
+                                            <tr>
+                                                <th>Symbol</th>
+                                                <th>Price</th>
+                                                <th>24h Change</th>
+                                                <th>Volume</th>
+                                                <th>Liquidity</th>
+                                                <th>Market Cap</th>
+                                                <th>Safety</th>
+                                                <th>Signals</th>
+                                                <th>Strength</th>
+                                                <th>Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="coinsTableBody">
+                                            <tr>
+                                                <td colspan="10" class="text-center">Start scanner to detect signals</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Trading Tab -->
+            <div class="tab-content" id="trading">
+                <div class="container">
+                    <h2>Advanced Trading</h2>
+                    <div class="trading-grid">
+                        <div class="card">
+                            <div class="card__header">
+                                <h3>Order Entry</h3>
+                            </div>
+                            <div class="card__body">
+                                <div class="order-type-selector">
+                                    <label class="radio-option">
+                                        <input type="radio" name="orderType" value="market" checked>
+                                        <span>Market Order</span>
+                                    </label>
+                                    <label class="radio-option">
+                                        <input type="radio" name="orderType" value="limit">
+                                        <span>Limit Order</span>
+                                    </label>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label class="form-label">Token Address</label>
+                                    <input type="text" class="form-control" id="tokenAddress" 
+                                           placeholder="Enter Solana token address">
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label class="form-label">Amount (SOL)</label>
+                                    <input type="number" class="form-control" id="tradeAmount" 
+                                           value="0.1" min="0.01" step="0.01">
+                                </div>
+                                
+                                <div id="limitPriceGroup" class="form-group hidden">
+                                    <label class="form-label">Limit Price ($)</label>
+                                    <input type="number" class="form-control" id="limitPrice" step="0.000001">
+                                </div>
+                                
+                                <div class="risk-management">
+                                    <h4>Risk Management</h4>
+                                    <div class="form-group">
+                                        <label class="form-label">Stop Loss (%)</label>
+                                        <input type="number" class="form-control" id="stopLossPercent" 
+                                               value="10" min="1" max="50">
+                                    </div>
+                                    
+                                    <div class="form-group">
+                                        <label class="form-label">Take Profit (%)</label>
+                                        <input type="number" class="form-control" id="takeProfitPercent" 
+                                               value="25" min="1" max="500">
+                                    </div>
+                                </div>
+                                
+                                <div class="liquidity-check">
+                                    <button class="btn btn--outline" onclick="tradingSystem.checkTokenSafetyUI()">
+                                        Check Token Safety
+                                    </button>
+                                    <div id="safetyResults" class="safety-results hidden"></div>
+                                </div>
+                                
+                                <div class="flex gap-8 mt-16">
+                                    <button class="btn btn--primary btn--lg" onclick="tradingSystem.executeRealTrade('buy')">
+                                        Buy
+                                    </button>
+                                    <button class="btn btn--secondary btn--lg" onclick="tradingSystem.executeRealTrade('sell')">
+                                        Sell
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="card">
+                            <div class="card__header">
+                                <h3>Open Positions</h3>
+                            </div>
+                            <div class="card__body">
+                                <div class="positions-grid" id="positionsGrid">
+                                    <p class="text-secondary">No open positions</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Analytics Tab -->
+            <div class="tab-content" id="analytics">
+                <div class="container">
+                    <h2>Performance Analytics</h2>
+                    <div class="analytics-grid">
+                        <div class="card">
+                            <div class="card__header">
+                                <h3>Performance Metrics</h3>
+                            </div>
+                            <div class="card__body">
+                                <div class="metrics-grid">
+                                    <div class="metric-item">
+                                        <span class="metric-label">Total P&L</span>
+                                        <span class="metric-value" id="totalPnl">$0.00</span>
+                                    </div>
+                                    <div class="metric-item">
+                                        <span class="metric-label">Win Rate</span>
+                                        <span class="metric-value" id="winRate">0%</span>
+                                    </div>
+                                    <div class="metric-item">
+                                        <span class="metric-label">Total Trades</span>
+                                        <span class="metric-value" id="totalTrades">0</span>
+                                    </div>
+                                    <div class="metric-item">
+                                        <span class="metric-label">Avg Return</span>
+                                        <span class="metric-value" id="avgReturn">0%</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="card">
+                            <div class="card__header">
+                                <h3>P&L Chart</h3>
+                            </div>
+                            <div class="card__body">
+                                <div class="chart-container">
+                                    <canvas id="pnlChart"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Settings Tab -->
+            <div class="tab-content" id="settings">
+                <div class="container">
+                    <h2>API Configuration</h2>
+                    <div class="api-config-grid">
+                        <div class="card">
+                            <div class="card__header">
+                                <h3>Helius RPC (Required)</h3>
+                                <span class="api-status" id="heliusStatus">Disconnected</span>
+                            </div>
+                            <div class="card__body">
+                                <div class="form-group">
+                                    <label class="form-label">API Key</label>
+                                    <input type="password" class="form-control" id="heliusKey" 
+                                           placeholder="Enter Helius API Key">
+                                </div>
+                                <button class="btn btn--primary" onclick="tradingSystem.testApiConnection('helius')">
+                                    Test Connection
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="card">
+                            <div class="card__header">
+                                <h3>PumpPortal Trading</h3>
+                                <span class="api-status" id="pumpportalStatus">Disconnected</span>
+                            </div>
+                            <div class="card__body">
+                                <div class="form-group">
+                                    <label class="form-label">API Key (For Trading)</label>
+                                    <input type="password" class="form-control" id="pumpportalKey" 
+                                           placeholder="Enter PumpPortal API Key">
+                                </div>
+                                <button class="btn btn--primary" onclick="tradingSystem.testApiConnection('pumpportal')">
+                                    Test Connection
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="card">
+                            <div class="card__header">
+                                <h3>Moralis API</h3>
+                                <span class="api-status" id="moralisStatus">Disconnected</span>
+                            </div>
+                            <div class="card__body">
+                                <div class="form-group">
+                                    <label class="form-label">API Key</label>
+                                    <input type="password" class="form-control" id="moralisKey" 
+                                           placeholder="Enter Moralis API Key">
+                                </div>
+                                <button class="btn btn--primary" onclick="tradingSystem.testApiConnection('moralis')">
+                                    Test Connection
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="card">
+                            <div class="card__header">
+                                <h3>DexScreener API</h3>
+                                <span class="api-status" id="dexscreenerStatus">Disconnected</span>
+                            </div>
+                            <div class="card__body">
+                                <p class="text-secondary">No API key required</p>
+                                <button class="btn btn--primary" onclick="tradingSystem.testApiConnection('dexscreener')">
+                                    Test Connection
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="card">
+                            <div class="card__header">
+                                <h3>Birdeye API</h3>
+                                <span class="api-status" id="birdeyeStatus">Disconnected</span>
+                            </div>
+                            <div class="card__body">
+                                <div class="form-group">
+                                    <label class="form-label">API Key</label>
+                                    <input type="password" class="form-control" id="birdeyeKey" 
+                                           placeholder="Enter Birdeye API Key">
+                                </div>
+                                <button class="btn btn--primary" onclick="tradingSystem.testApiConnection('birdeye')">
+                                    Test Connection
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="card">
+                            <div class="card__header">
+                                <h3>OpenAI (LLM Analysis)</h3>
+                                <span class="api-status" id="openaiStatus">Disconnected</span>
+                            </div>
+                            <div class="card__body">
+                                <div class="form-group">
+                                    <label class="form-label">API Key</label>
+                                    <input type="password" class="form-control" id="openaiKey" 
+                                           placeholder="Enter OpenAI API Key">
+                                </div>
+                                <button class="btn btn--primary" onclick="tradingSystem.testApiConnection('openai')">
+                                    Test Connection
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-8">
+                        <h2>Trading Settings</h2>
+                        <div class="settings-grid">
+                            <div class="card">
+                                <div class="card__body">
+                                    <h4>Risk Management</h4>
+                                    <div class="form-group">
+                                        <label class="form-label">Max Exposure per Coin (%)</label>
+                                        <input type="number" class="form-control" id="maxExposure" 
+                                               value="5" min="1" max="10">
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label">Daily Loss Limit (%)</label>
+                                        <input type="number" class="form-control" id="dailyLossLimit" 
+                                               value="20" min="5" max="50">
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label">Default Stop Loss (%)</label>
+                                        <input type="number" class="form-control" id="stopLoss" 
+                                               value="15" min="5" max="30">
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label">Max Positions</label>
+                                        <input type="number" class="form-control" id="maxPositions" 
+                                               value="10" min="1" max="50">
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="card">
+                                <div class="card__body">
+                                    <h4>Scanner Settings</h4>
+                                    <div class="form-group">
+                                        <label class="form-label">Volume Spike (%)</label>
+                                        <input type="number" class="form-control" id="volumeSpike" 
+                                               value="200" min="100" max="500">
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label">Min Liquidity ($)</label>
+                                        <input type="number" class="form-control" id="minLiquidity" 
+                                               value="50000" min="10000" max="500000">
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label">Min Volume/MC Ratio</label>
+                                        <input type="number" step="0.1" class="form-control" id="volumeMcapRatio" 
+                                               value="0.5" min="0" max="2">
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label">Check Interval (ms)</label>
+                                        <input type="number" class="form-control" id="checkInterval" 
+                                               value="5000" min="1000" max="60000">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="card">
+                                <div class="card__body">
+                                    <h4>Trading Execution</h4>
+                                    <div class="form-group">
+                                        <label class="form-label">Slippage (%)</label>
+                                        <input type="number" step="0.1" class="form-control" id="slippage" 
+                                               value="0.5" min="0.1" max="5">
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label">Priority Fee (SOL)</label>
+                                        <input type="number" step="0.0001" class="form-control" id="priorityFee" 
+                                               value="0.0001" min="0" max="0.01">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="flex gap-8 mt-8">
+                            <button class="btn btn--primary" onclick="tradingSystem.saveSettings()">Save Settings</button>
+                            <button class="btn btn--secondary" onclick="tradingSystem.loadSettings()">Load Settings</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="loading-spinner"></div>
+        <p>Processing...</p>
+    </div>
+
+    <!-- Toast Notifications -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <!-- Load the application -->
+    <script src="app.js"></script>
+</body>
+</html>
