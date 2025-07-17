@@ -1289,9 +1289,91 @@ Respond in JSON format.`;
         
         // Switch to trading tab
         this.switchTab('trading');
-        
+
         // Show token in trading interface
         this.showToast(`Ready to trade ${symbol}`, 'info');
+    }
+
+    // ----- UI Helpers -----
+    switchTab(tab) {
+        document.querySelectorAll('.nav-tab').forEach(t => {
+            t.classList.toggle('active', t.dataset.tab === tab);
+        });
+
+        document.querySelectorAll('.tab-content').forEach(c => {
+            c.classList.toggle('active', c.id === tab);
+        });
+    }
+
+    updateUI() {
+        this.updateWalletUI();
+        this.updatePositionsUI();
+        this.updateAnalytics();
+
+        const apis = ['helius','moralis','dexscreener','coingecko','jupiter','birdeye','openai','pumpportal'];
+        apis.forEach(api => {
+            this.updateApiStatus(api, !!this.apiKeys[api]);
+        });
+    }
+
+    updateApiStatus(api, connected) {
+        const el = document.getElementById(`${api}Status`);
+        if (el) {
+            el.textContent = connected ? 'Connected' : 'Disconnected';
+            el.classList.toggle('connected', connected);
+        }
+    }
+
+    initializeCharts() {
+        const ctx = document.getElementById('pnlChart');
+        if (ctx && window.Chart) {
+            this.pnlChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        label: 'PnL',
+                        data: [],
+                        borderColor: 'rgba(33,128,141,1)',
+                        backgroundColor: 'rgba(33,128,141,0.1)'
+                    }]
+                },
+                options: { responsive: true, scales: { x: { display: false } } }
+            });
+        }
+    }
+
+    updateAnalytics() {
+        const total = document.getElementById('totalPnl');
+        const win = document.getElementById('winRate');
+        const trades = document.getElementById('totalTrades');
+        const avg = document.getElementById('avgReturn');
+
+        if (total) total.textContent = `$${this.performance.totalPnl.toFixed(2)}`;
+        if (win) win.textContent = `${this.performance.winRate.toFixed(2)}%`;
+        if (trades) trades.textContent = this.performance.totalTrades;
+        if (avg) avg.textContent = `${this.performance.avgReturn.toFixed(2)}%`;
+
+        if (this.pnlChart) {
+            const labels = this.pnlChart.data.labels;
+            const data = this.pnlChart.data.datasets[0].data;
+            labels.push(new Date().toLocaleTimeString());
+            data.push(this.performance.totalPnl);
+            if (labels.length > 20) { labels.shift(); data.shift(); }
+            this.pnlChart.update();
+        }
+    }
+
+    showTokenDetails(address) {
+        window.open(`https://dexscreener.com/solana/${address}`, '_blank');
+    }
+
+    logTrade(trade) {
+        this.tradeHistory.push(trade);
+    }
+
+    modifyPosition() {
+        this.showToast('Modify position feature coming soon', 'info');
     }
 }
 
